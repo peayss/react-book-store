@@ -6,22 +6,19 @@ import Button from "../components/common/Button";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { error } from "console";
-import { signup } from "../api/auth.api";
+import { resetPassword, resetRequest, signup } from "../api/auth.api";
 import { useAlert } from "../hooks/useAlert";
+import { SignupStyle } from "./Signup";
 
 export interface SignupProps {
     email: string;
     password: string;
 }
 
-function Signup() {
+function ResetPassword() {
     const nevigate = useNavigate();
     const showAlert = useAlert();
-    // const [email, setEmail] = useState("");
-    // const [password, setPassword] = useState("");
-    // const handleSubmit = (event: React.FormEvent<HTMLFormElement>)=>{
-    //     event.preventDefault();
-    // }
+    const [resetRequested, setResetRequested] = useState(false);
     const {
         register,
         handleSubmit,
@@ -29,14 +26,20 @@ function Signup() {
     } = useForm<SignupProps>();
 
     const onSubmit = (data: SignupProps) => {
-        signup(data).then((res) => {
-            showAlert('회원가입이 완료되었습니다.');
-            nevigate("/login");
-        });
+        if (resetRequested) {
+            resetPassword(data).then(()=>{
+                showAlert("비밀번호 초기화되었습니다");
+                nevigate("/login");
+            })
+        } else {
+            resetRequest(data).then(()=>{
+                setResetRequested(true);
+            });
+        }
     };
     return(
         <>
-            <Title size="large">회원가입</Title>
+            <Title size="large">비밀번호 초기화</Title>
             <SignupStyle>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <fieldset>
@@ -48,7 +51,8 @@ function Signup() {
                         {errors.email && <p
                         className="error-text">이메일을 입력해주세요.</p>}
                     </fieldset>
-                    <fieldset>
+                    {resetRequested && (
+                        <fieldset>
                         <InputText placeholder="비밀번호"
                         inputType="password"
                         {...register("password", {required: true})}
@@ -56,9 +60,10 @@ function Signup() {
                         {errors.password && <p
                         className="error-text">비밀번호를 입력해주세요.</p>}
                     </fieldset>
+                    )}
                     <fieldset>
                         <Button type = "submit" size = "medium" scheme="primary">
-                            회원가입
+                            {resetRequested ? "비밀번호 초기화" : "초기화 요청"}
                         </Button>
                     </fieldset>
                     <div className="info">
@@ -69,25 +74,4 @@ function Signup() {
         </>
     );
 }
-export const SignupStyle = styled.div`
-    max-width: ${({theme}) => theme.layout.width.small};
-    margin: 80px auto;
-    fieldset {
-        border: 0;
-        padding: 0 0 8px 0;
-        .error-text {
-            color: red;
-        }
-    }
-    input {
-        width: 100%;
-    }
-    button {
-        width: 100%;
-    }
-    .info{
-        text-align: center;
-        padding: 16px 0 0 0;
-    }
-`;
-export default Signup;
+export default ResetPassword;
